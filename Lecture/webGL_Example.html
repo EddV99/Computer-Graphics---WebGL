@@ -1,6 +1,7 @@
 <html>
 
-<head>
+<head></head>
+   <body>
     <title>WebGL Example</title>
     <script id="vertexShader" type="x-shader/x-vertex">
     attribute vec3 pos;
@@ -132,12 +133,12 @@
             gl.uniformMatrix4fv(m, false, matrix);
 
             // set attributes in shaders
-            var p = gl.getAttributeLocation(prog, 'pos');
+            var p = gl.getAttribLocation(prog, 'pos');
             gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
             gl.vertexAttribPointer(p, 3, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(p);
 
-            var c = gl.getAttributeLocation(prog, 'clr');
+            var c = gl.getAttribLocation(prog, 'clr');
             gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
             gl.vertexAttribPointer(c, 4, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(c);
@@ -149,15 +150,16 @@
     </script>
     <style>
         #mycanvas {
-            Width: 50%;
+            width: 50%;
+            height: 50%;
             margin: auto;
             display: block;
             border: 1px solid black;
         }
     </style>
-</head>
 
-<body>
+
+
     <canvas id="mycanvas"></canvas>
 </body>
 
