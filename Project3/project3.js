@@ -1,10 +1,10 @@
-// [TO-DO] Complete the implementation of the following class and the vertex shader below.
+// Complete the implementation of the following class and the vertex shader below.
 
 class CurveDrawer {
 	constructor()
 	{
 		this.prog   = InitShaderProgram( curvesVS, curvesFS );
-		// [TO-DO] Other initializations should be done here.
+		// Other initializations should be done here.
 		// This is a good place to get the locations of attributes and uniform variables.
 		// 	Get locations of attributes
 		this.t = gl.getAttribLocation(this.prog, 't');
@@ -27,17 +27,15 @@ class CurveDrawer {
 		this.t_buffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.t_buffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tv), gl.STATIC_DRAW);
-
 	}
 	setViewport( width, height )
 	{
-		//[1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1];
 		// This is where we should set the transformation matrix
-		var trans = [ 2/width,0,0,0,  0,-2/height,0,0, 0,0,1,0, -1,1,0,1 ]; 
-		// just identity matrix, could be wrong
+		var mvp = [2/width,0,0,0,  0,-2/height,0,0, 0,0,1,0, -1,1,0,1]; 
+		
 		// Do not forget to bind the program before you set a uniform variable value.
-		gl.useProgram( this.prog );	// Bind the program
-		gl.uniformMatrix4fv(this.mvp, false, trans);
+		gl.useProgram(this.prog);	// Bind the program
+		gl.uniformMatrix4fv(this.mvp, false, mvp);
 	}
 	updatePoints( pt )
 	{
@@ -46,7 +44,6 @@ class CurveDrawer {
 		// We can access the x and y coordinates of the i^th control points using
 		// var x = pt[i].getAttribute("cx");
 		// var y = pt[i].getAttribute("cy");
-
 		var p = [];
 		for ( var i=0; i<4; ++i ) {
 			var x = pt[i].getAttribute("cx");
@@ -55,10 +52,11 @@ class CurveDrawer {
 			p.push(y);
 		}
 		gl.useProgram(this.prog);
-		var y = p.pop();
-		var x = p.pop();
-		gl.uniform2f(this.p3, x, y);
-		y = p.pop();
+		
+		var y = p.pop(); // get y first since pop grabs from end
+		var x = p.pop(); 
+		gl.uniform2f(this.p3, x, y); // we are popping from end of list so set p3 first
+		y = p.pop();                 
 		x = p.pop();
 		gl.uniform2f(this.p2, x, y);
 		y = p.pop();
@@ -77,7 +75,7 @@ class CurveDrawer {
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.t_buffer);
 		gl.vertexAttribPointer(this.t, 1, gl.FLOAT, false, 0, 0);
 		gl.enableVertexAttribArray(this.t);
-		gl.drawArrays(gl.LINE_STRIP, 0, 100); // might have to change to 100 
+		gl.drawArrays(gl.LINE_STRIP, 0, this.steps); // go through all steps of t
 	}
 }
 
@@ -90,22 +88,22 @@ var curvesVS = `
 	uniform vec2 p2;
 	uniform vec2 p3;
 	vec2 bezier(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t);
+	
 	void main()
 	{
-		// [TO-DO] Replace the following with the proper vertex shader code
 		vec2 ft = bezier(p0, p1, p2, p3, t);
 		gl_Position = mvp * vec4(ft, 0, 1);
 	}
-
+	// Returns the pos along the bezier curves with given t
+	// and control points p0, p1, p2, and p3
 	vec2 bezier(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t)
 	{
-		vec2 sum1 = pow(1.0 - t, 3.0) * p0;
-		vec2 sum2 = (3.0 * pow(1.0 - t, 2.0) * t) * p1;
-		vec2 sum3 = (3.0 * (1.0 - t) * t * t) * p2;
-		vec2 sum4 = (t * t * t) * p3; 
-		return sum1 + sum2 + sum3 + sum4;
+		vec2 sum0 = pow(1.0 - t, 3.0) * p0;
+		vec2 sum1 = (3.0 * pow(1.0 - t, 2.0) * t) * p1;
+		vec2 sum2 = (3.0 * (1.0 - t) * t * t) * p2;
+		vec2 sum3 = (t * t * t) * p3; 
+		return sum0 + sum1 + sum2 + sum3;
 	}
-
 `;
 
 // Fragment Shader
