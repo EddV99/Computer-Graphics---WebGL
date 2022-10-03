@@ -1,0 +1,29 @@
+[33mcommit e409906c1388ac262803bc3c66c8cf9989fbc41c[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: EddV99 <eduardo12899@gmail.com>
+Date:   Mon Oct 3 15:08:45 2022 -0600
+
+    test merge
+
+[33mcommit 10f3945563e6ab684afbf26744493daa92f33c28[m
+Author: EddV99 <eduardo12899@gmail.com>
+Date:   Tue Sep 27 16:57:47 2022 -0600
+
+    added notes and starting Project 3
+
+[33mcommit 7ff0ad39f382e1a6ef7b87819a060e4ebd4f57cb[m
+Author: EddV99 <eduardo12899@gmail.com>
+Date:   Tue Sep 27 00:14:07 2022 -0600
+
+    finished webgl example and remove unused files
+
+[33mcommit cb183447a7808de8af3bf43e9500068f0f14c22e[m
+Author: EddV99 <eduardo12899@gmail.com>
+Date:   Mon Sep 26 23:53:18 2022 -0600
+
+    webgl lecture files, my implementation not working
+
+[33mcommit a7deab14acca2768ed1ede5bbfbc365039052b71[m
+Author: EddV99 <eduardo12899@gmail.com>
+Date:   Wed Sep 21 23:53:40 2022 -0600
+
+    Initial comiit
