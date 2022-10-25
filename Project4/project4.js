@@ -4,39 +4,40 @@
 // The given projection matrix is also a 4x4 matrix stored as an array in column-major order.
 // You can use the MatrixMult function defined in project4.html to multiply two 4x4 matrices in the same format.
 function GetModelViewProjection(projectionMatrix, translationX, translationY, translationZ, rotationX, rotationY) {
-	var trans = [
+
+	var translation = [
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
 		translationX, translationY, translationZ, 1
 	];
 
-	var cx = Math.cos(rotationX);
-	var sx = Math.sin(rotationX);
+	var cosx = Math.cos(rotationX);
+	var sinx = Math.sin(rotationX);
 	var rotX = [
 		1, 0, 0, 0,
-		0, cx, sx, 0,
-		0, -sx, cx, 0,
+		0, cosx, sinx, 0,
+		0, -sinx, cosx, 0,
 		0, 0, 0, 1
 	];
 
-	var cy = Math.cos(rotationY);
-	var sy = Math.sin(rotationY);
+	var cosy = Math.cos(rotationY);
+	var siny = Math.sin(rotationY);
 	var rotY = [
-		cy, 0, -sy, 0,
+		cosy, 0, -siny, 0,
 		0, 1, 0, 0,
-		sy, 0, cy, 0,
+		siny, 0, cosy, 0,
 		0, 0, 0, 1
 	];
 
+	// Rotate from x axis then y 
 	var mvp = MatrixMult(rotY, rotX);
-	mvp = MatrixMult(trans, mvp);
+	// Then do translation
+	mvp = MatrixMult(translation, mvp);
+	// last projection matrix
 	mvp = MatrixMult(projectionMatrix, mvp);
 	return mvp;
 }
-
-
-// [TO-DO] Complete the implementation of the following class.
 
 class MeshDrawer {
 	// The constructor is a good place for taking care of the necessary initializations.
@@ -44,14 +45,19 @@ class MeshDrawer {
 		// Initialize program
 		this.prog = InitShaderProgram(meshVS, meshFS);
 
-		// Get locations of uniform and attribute variables
+		// Uniform locations
 		this.mvp = gl.getUniformLocation(this.prog, 'mvp');
 		this.swap = gl.getUniformLocation(this.prog, 'swap');
+		this.show = gl.getUniformLocation(this.prog, 'show');
+		this.sampler = gl.getUniformLocation(this.prog, 'texture');
 
+		// Attribute locations
 		this.pos = gl.getAttribLocation(this.prog, 'pos');
+		this.texPos = gl.getAttribLocation(this.prog, 'texPos');
 
 		// Create buffers (We don't set buffer here)
 		this.posBuffer = gl.createBuffer();
+		this.texPosBuffer = gl.createBuffer();
 
 		// Create texture
 		this.texture = gl.createTexture();
@@ -75,8 +81,12 @@ class MeshDrawer {
 
 		this.numTriangles = vertPos.length / 3;
 
+		// Send pos data to gpu
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW);
+		// Send texture pos data to gpu
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.texPosBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 	}
 
 	// This method is called when the user changes the state of the
@@ -86,9 +96,9 @@ class MeshDrawer {
 		gl.useProgram(this.prog);
 
 		if (swap) {
-			gl.uniform1i(this.swap, 1);
+			gl.uniform1i(this.swap, 1); // one same as true
 		} else {
-			gl.uniform1i(this.swap, 0);
+			gl.uniform1i(this.swap, 0); // set to false
 		}
 	}
 
@@ -100,11 +110,15 @@ class MeshDrawer {
 
 		// Set uniform mvp
 		gl.uniformMatrix4fv(this.mvp, false, trans);
-		
-		// Set pos attribute
+
+		// Get ready to use data in gpu
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
 		gl.vertexAttribPointer(this.pos, 3, gl.FLOAT, false, 0, 0);
 		gl.enableVertexAttribArray(this.pos);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.texPosBuffer);
+		gl.vertexAttribPointer(this.texPos, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.texPos);
 
 		gl.drawArrays(gl.TRIANGLES, 0, this.numTriangles);
 
@@ -113,21 +127,38 @@ class MeshDrawer {
 	// This method is called to set the texture of the mesh.
 	// The argument is an HTML IMG element containing the texture data.
 	setTexture(img) {
+		gl.useProgram(this.prog);
+
 		// Bind the texture
 		gl.bindTexture(gl.TEXTURE_2D, this.texture);
+
 		// You can set the texture image data using the following command.
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+		gl.generateMipmap(gl.TEXTURE_2D);
 
-		gl.generateMipMap(gl.TEXTURE_2D);
-		// [TO-DO] Now that we have a texture, it might be a good idea to set
+		// Use unit 0
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this.texture);
+
+		// Setting sampler to id of unit
+		gl.uniform1i(this.sampler, 0);
+
+		// Now that we have a texture, it might be a good idea to set
 		// some uniform parameter(s) of the fragment shader, so that it uses the texture.
+		this.showTexture(1);
 	}
 
 	// This method is called when the user changes the state of the
 	// "Show Texture" checkbox. 
 	// The argument is a boolean that indicates if the checkbox is checked.
 	showTexture(show) {
-		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify if it should use the texture.
+		gl.useProgram(this.prog);
+
+		if (show) {
+			gl.uniform1i(this.show, 1);
+		} else {
+			gl.uniform1i(this.show, 0);
+		}
 	}
 
 }
@@ -136,22 +167,37 @@ var meshVS = `
 uniform mat4 mvp;
 uniform bool swap;
 attribute vec3 pos;
+attribute vec2 texPos;
+varying vec2 texCoord;
 void main()
 {
 	if (swap)
 	{
-		gl_Position = mvp * vec4(pos.xzy, 1);
+		gl_Position = mvp * vec4(pos.xzy, 1); // Use swizzle to swap y & z
+		texCoord = texPos;
 	}
 	else
 	{
 		gl_Position = mvp * vec4(pos, 1);
+		texCoord = texPos;
 	}
 }
 `
 var meshFS = `
 precision mediump float;
+uniform bool show;
+uniform sampler2D texture;
+varying vec2 texCoord;
 void main()
 {
-	gl_FragColor = vec4(1,gl_FragCoord.z*gl_FragCoord.z,0,1);
+	if (show)
+	{
+		gl_FragColor = texture2D(texture, texCoord);
+	}
+	else
+	{
+		gl_FragColor = vec4(1, gl_FragCoord.z*gl_FragCoord.z, 0, 1);
+	}
+	
 }
 `
