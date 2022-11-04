@@ -11,7 +11,28 @@ function GetModelViewMatrix( translationX, translationY, translationZ, rotationX
 		0, 0, 1, 0,
 		translationX, translationY, translationZ, 1
 	];
-	var mv = trans;
+
+	var cosx = Math.cos( rotationX );
+	var sinx = Math.sin( rotationX );
+	var rotX = [
+		1, 0, 0, 0,
+		0, cosx, sinx, 0,
+		0, -sinx, cosx, 0,
+		0, 0, 0, 1
+	];
+
+	var cosy = Math.cos( rotationY );
+	var siny = Math.sin( rotationY );
+	var rotY = [
+		cosy, 0, -siny, 0,
+		0, 1, 0, 0,
+		siny, 0, cosy, 0,
+		0, 0, 0, 1
+	];
+
+	var mv = MatrixMult( rotY, rotX );
+	mv = MatrixMult( trans, mv );
+
 	return mv;
 }
 
@@ -23,7 +44,21 @@ class MeshDrawer
 	// The constructor is a good place for taking care of the necessary initializations.
 	constructor()
 	{
-		// [TO-DO] initializations
+		// Program
+		this.prog = InitShaderProgram( meshVS, meshFS );
+
+		// Uniform Locations
+		this.show = gl.getUniformLocation( this.prog, 'show' );
+		this.swap = gl.getUniformLocation( this.prog, 'swap' );
+		this.shininess = getUniformLocation( this.prog, 'shininess' );
+
+		// Attribute Locations
+
+		// Buffers
+
+		// Texture
+		this.texture = gl.createTexture();
+		// Initial States
 	}
 	
 	// This method is called every time the user opens an OBJ file.
@@ -40,6 +75,8 @@ class MeshDrawer
 	setMesh( vertPos, texCoords, normals )
 	{
 		// [TO-DO] Update the contents of the vertex buffer objects.
+		gl.useProgram( this.prog );
+
 		this.numTriangles = vertPos.length / 3;
 	}
 	
@@ -49,6 +86,15 @@ class MeshDrawer
 	swapYZ( swap )
 	{
 		// [TO-DO] Set the uniform parameter(s) of the vertex shader
+		gl.useProgram( this.prog );
+		if ( swap )
+		{
+			gl.uniform1i(this.swap, 1);
+		}
+		else
+		{
+			gl.uniform1i(this.swap, 0);
+		}
 	}
 	
 	// This method is called to draw the triangular mesh.
@@ -59,6 +105,7 @@ class MeshDrawer
 	draw( matrixMVP, matrixMV, matrixNormal )
 	{
 		// [TO-DO] Complete the WebGL initializations before drawing
+		gl.useProgram( this.prog );
 
 		gl.drawArrays( gl.TRIANGLES, 0, this.numTriangles );
 	}
@@ -67,13 +114,21 @@ class MeshDrawer
 	// The argument is an HTML IMG element containing the texture data.
 	setTexture( img )
 	{
+		gl.useProgram( this.prog );
 		// [TO-DO] Bind the texture
-
+		gl.bindTexture( gl.TEXTURE_2D, this.texture );
 		// You can set the texture image data using the following command.
 		gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img );
+		gl.generateMipmap( gl.TEXTURE_2D );
 
 		// [TO-DO] Now that we have a texture, it might be a good idea to set
 		// some uniform parameter(s) of the fragment shader, so that it uses the texture.
+		gl.activeTexture( gl.TEXTURE0 );
+		gl.bindTexture( gl.TEXTURE_2D, this.texture );
+
+		gl.uniform1i( this.sampler, 0 );
+
+		this.showTexture( 1 );
 	}
 	
 	// This method is called when the user changes the state of the
@@ -82,17 +137,68 @@ class MeshDrawer
 	showTexture( show )
 	{
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify if it should use the texture.
+		gl.useProgram( this.prog );
+		if ( show )
+		{
+			gl.uniform1i(this.show, 1);
+		}
+		else
+		{
+			gl.uniform1i(this.show, 0);
+		}
 	}
 	
 	// This method is called to set the incoming light direction
 	setLightDir( x, y, z )
 	{
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify the light direction.
+		gl.useProgram( this.prog );
 	}
 	
 	// This method is called to set the shininess of the material
 	setShininess( shininess )
 	{
 		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify the shininess.
+		gl.useProgram( this.prog );
+		gl.uniform1f( this.shininess, shininess );
 	}
 }
+
+
+
+var meshVS = `
+uniform bool swap;
+
+void main()
+{
+	if ( swap )
+	{
+
+	}
+	else
+	{
+
+	}
+}
+`
+var meshFS = `
+uniform bool show;
+uniform float shininess;
+
+void main()
+{
+	if ( show )
+	{
+
+	}
+	else
+	{
+
+	}
+}
+
+float renderingEquation( float shininess )
+{
+	
+}
+`
