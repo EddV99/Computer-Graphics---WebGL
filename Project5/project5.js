@@ -68,6 +68,9 @@ class MeshDrawer {
 		this.texture = gl.createTexture();
 
 		// Initial States
+		this.swapYZ(0);
+		this.showTexture(0);
+
 	}
 
 	// This method is called every time the user opens an OBJ file.
@@ -198,24 +201,28 @@ attribute vec2 tPos;
 
 varying vec2 vtPos;
 varying vec3 vnormal;
-varying vec3 viewDir;
+varying vec3 v; // View Direction
+
+vec4 vdir;
 void main()
 {
-	vec4 pp = mv * vec4(pos, 0);
-	pp = -1.0 * (pp / abs(pp));
-	viewDir = pp.xyz;
-
 	if ( swap )
 	{
 		gl_Position = mvp * vec4(pos.xzy, 1);
 		vnormal = normal;
 		vtPos = tPos;
+
+		vdir = mv * vec4(pos.xzy, 1);
+		v = normalize(-1.0*vdir.xzy);
 	}
 	else
 	{
 		gl_Position = mvp * vec4(pos, 1);
 		vnormal = normal;
 		vtPos = tPos;
+
+		vdir = mv * vec4(pos, 1);
+		v = normalize(-1.0*vdir.xyz);
 	}
 }
 `
@@ -230,14 +237,16 @@ uniform mat3 mvn;
 
 varying vec2 vtPos;
 varying vec3 vnormal;
-varying vec3 viewDir;
+varying vec3 v;
+
 vec3 blinn(vec3 Kd);
+
 void main()
 {
 	if ( show )
 	{
 		vec4 tc = texture2D(texture, vtPos);
-		gl_FragColor = vec4(blinn(tc.xyz), 1);
+		gl_FragColor = vec4(blinn(tc.xyz), tc.w);
 	}
 	else
 	{
@@ -247,14 +256,16 @@ void main()
 
 vec3 blinn(vec3 Kd)
 {
+	vec3 n = mvn * vnormal;
 	vec3 I = vec3(1, 1, 1);
-	float cosTheta = dot((mvn * vnormal), lightDir);
+
+	float cosTheta = dot(n, lightDir);
+
 	vec3 Ks = vec3(1, 1, 1);
 
-	vec3 h = (lightDir + viewDir) / abs(lightDir + viewDir);
-	float cosPhi = dot(vnormal, h);
+	vec3 h = normalize(lightDir + v);
+	float cosPhi = dot(n, h);
 
 	return I * ((cosTheta * Kd) + (Ks * pow(cosPhi, shininess)));
-
 }
 `
