@@ -49,9 +49,10 @@ class MeshDrawer {
 		this.swap = gl.getUniformLocation( this.prog, 'swap' );
 		this.shininess = gl.getUniformLocation( this.prog, 'shininess' );
 		this.sampler = gl.getUniformLocation( this.prog, 'texture' );
-		this.mvp = gl.getUniformLocation( this.prog, 'mvp' ):
+		this.mvp = gl.getUniformLocation( this.prog, 'mvp' );
 		this.mv = gl.getUniformLocation( this.prog, 'mv' );
 		this.mvn = gl.getUniformLocation( this.prog, 'mvn' );
+		this.lightDir = gl.getUniformLocation( this.prog, 'lightDir' );
 
 		// Attribute Locations
 		this.pos = gl.getAttribLocation( this.prog, 'pos' );
@@ -171,8 +172,9 @@ class MeshDrawer {
 
 	// This method is called to set the incoming light direction
 	setLightDir(x, y, z) {
-		// [TO-DO] set the uniform parameter(s) of the fragment shader to specify the light direction.
+		// set the uniform parameter(s) of the fragment shader to specify the light direction.
 		gl.useProgram(this.prog);
+		gl.uniform3f(this.lightDir, x, y, z);
 	}
 
 	// This method is called to set the shininess of the material
@@ -187,44 +189,72 @@ class MeshDrawer {
 
 var meshVS = `
 uniform bool swap;
+uniform mat4 mvp;
+uniform mat4 mv;
+
 attribute vec3 pos; 
 attribute vec3 normal;
 attribute vec2 tPos;
-varying vec2 vtPos;
 
+varying vec2 vtPos;
+varying vec3 vnormal;
+varying vec3 viewDir;
 void main()
 {
+	vec4 pp = mv * vec4(pos, 0);
+	pp = -1.0 * (pp / abs(pp));
+	viewDir = pp.xyz;
+
 	if ( swap )
 	{
-
+		gl_Position = mvp * vec4(pos.xzy, 1);
+		vnormal = normal;
+		vtPos = tPos;
 	}
 	else
 	{
-
+		gl_Position = mvp * vec4(pos, 1);
+		vnormal = normal;
+		vtPos = tPos;
 	}
 }
 `
 var meshFS = `
 precision mediump float;
+
 uniform bool show;
 uniform float shininess;
 uniform sampler2D texture;
-varying vec2 vtPos;
+uniform vec3 lightDir;
+uniform mat3 mvn;
 
+varying vec2 vtPos;
+varying vec3 vnormal;
+varying vec3 viewDir;
+vec3 blinn(vec3 Kd);
 void main()
 {
 	if ( show )
 	{
-
+		vec4 tc = texture2D(texture, vtPos);
+		gl_FragColor = vec4(blinn(tc.xyz), 1);
 	}
 	else
 	{
-
+		gl_FragColor = vec4(blinn(vec3(1, 1, 1)), 1);
 	}
 }
 
-float renderingEquation( float shininess )
+vec3 blinn(vec3 Kd)
 {
-	
+	vec3 I = vec3(1, 1, 1);
+	float cosTheta = dot((mvn * vnormal), lightDir);
+	vec3 Ks = vec3(1, 1, 1);
+
+	vec3 h = (lightDir + viewDir) / abs(lightDir + viewDir);
+	float cosPhi = dot(vnormal, h);
+
+	return I * ((cosTheta * Kd) + (Ks * pow(cosPhi, shininess)));
+
 }
 `

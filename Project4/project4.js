@@ -192,7 +192,8 @@ void main()
 {
 	if (show)
 	{
-		gl_FragColor = texture2D(texture, texCoord);
+		Kd = texture2D(texture, texCoord);
+		
 	}
 	else
 	{
