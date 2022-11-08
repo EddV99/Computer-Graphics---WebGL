@@ -34,6 +34,7 @@ uniform samplerCube envMap;
 uniform int bounceLimit;
 
 bool IntersectRay( inout HitInfo hit, Ray ray );
+vec3 Blinn();
 
 // Shades the given point and returns the computed color.
 vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
@@ -54,6 +55,7 @@ vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
 bool IntersectRay( inout HitInfo hit, Ray ray )
 {
 	Sphere sphere;
+	float closest = 1.0; // z-value of positions to find closest. 
 	hit.t = 1e30;
 	bool foundHit = false;
 	for ( int i=0; i<NUM_SPHERES; ++i ) {
@@ -77,11 +79,17 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 			vec3 x = ray.pos + (t * ray.dir); // position is x = p + td
 			vec3 xn = normalize(x); // find normal of x
 
-			// If intersection is found, update the given HitInfo
-			hit.t = t;
-			hit.position = x;
-			hit.normal = xn;
-			hit.mtl = sphere.mtl;
+
+			if (x.z > closest && closest <= 0.0)
+			{
+				closest = x.z;
+
+				// If intersection is found, update the given HitInfo
+				hit.t = t;
+				hit.position = x;
+				hit.normal = xn;
+				hit.mtl = sphere.mtl;
+			}
 		}
 	}
 	return foundHit;
