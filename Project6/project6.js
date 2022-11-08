@@ -53,11 +53,36 @@ vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
 // Returns true if an intersection is found.
 bool IntersectRay( inout HitInfo hit, Ray ray )
 {
+	Sphere sphere;
 	hit.t = 1e30;
 	bool foundHit = false;
 	for ( int i=0; i<NUM_SPHERES; ++i ) {
-		// TO-DO: Test for ray-sphere intersection
-		// TO-DO: If intersection is found, update the given HitInfo
+		// Test for ray-sphere intersection
+
+		// grab sphere to test
+		sphere = spheres[i];
+
+		// This implementation assumes we wont be in sphere!!!! [FIX FOR FINAL TURN IN]
+		float a = dot(ray.dir, ray.dir);
+		float b = dot(2.0 * ray.dir, ray.pos - sphere.center);
+		float c = dot(ray.pos - sphere.center, ray.pos - sphere.center) - pow(sphere.radius, 2.0);
+
+		float delta = pow(b, 2.0) - (4.0 * a * c);
+
+		if (delta >= 0.0){
+			// If delta is positive or zero then we found a hit.
+			foundHit = true;
+
+			float t = (-b - sqrt(delta)) / (2.0*a); // use negative for first hit
+			vec3 x = ray.pos + (t * ray.dir); // position is x = p + td
+			vec3 xn = normalize(x); // find normal of x
+
+			// If intersection is found, update the given HitInfo
+			hit.t = t;
+			hit.position = x;
+			hit.normal = xn;
+			hit.mtl = sphere.mtl;
+		}
 	}
 	return foundHit;
 }
