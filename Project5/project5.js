@@ -257,6 +257,7 @@ void main()
 	}
 }
 
+// Does Blinn Material Model shading. Returns color as vec3.
 vec3 blinn(vec3 Kd)
 {
 	vec3 Ks = vec3(1, 1, 1); // specular
