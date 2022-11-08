@@ -3,7 +3,7 @@
 // It returns the combined 4x4 transformation matrix as an array in column-major order.
 // You can use the MatrixMult function defined in project5.html to multiply two 4x4 matrices in the same format.
 function GetModelViewMatrix(translationX, translationY, translationZ, rotationX, rotationY) {
-	// [TO-DO] Modify the code below to form the transformation matrix.
+	// Modify the code below to form the transformation matrix.
 	var trans = [
 		1, 0, 0, 0,
 		0, 1, 0, 0,
@@ -36,7 +36,7 @@ function GetModelViewMatrix(translationX, translationY, translationZ, rotationX,
 }
 
 
-// [TO-DO] Complete the implementation of the following class.
+// Complete the implementation of the following class.
 
 class MeshDrawer {
 	// The constructor is a good place for taking care of the necessary initializations.
@@ -56,7 +56,7 @@ class MeshDrawer {
 
 		// Attribute Locations
 		this.pos = gl.getAttribLocation( this.prog, 'pos' );
-		this.tPos = gl.getAttribLocation( this.prog, 'tPos' );
+		this.texturePos = gl.getAttribLocation( this.prog, 'texturePos' );
 		this.normal = gl.getAttribLocation( this.prog, 'normal' );
 
 		// Buffers
@@ -130,8 +130,8 @@ class MeshDrawer {
 		gl.enableVertexAttribArray( this.pos );
 
 		gl.bindBuffer( gl.ARRAY_BUFFER, this.tPosBuffer );
-		gl.vertexAttribPointer( this.tPos, 2, gl.FLOAT, false, 0, 0 );
-		gl.enableVertexAttribArray( this.tPos );
+		gl.vertexAttribPointer( this.texturePos, 2, gl.FLOAT, false, 0, 0 );
+		gl.enableVertexAttribArray( this.texturePos );
 
 		gl.bindBuffer( gl.ARRAY_BUFFER, this.normalsBuffer );
 		gl.vertexAttribPointer( this.normal, 3, gl.FLOAT, false, 0, 0 );
@@ -191,61 +191,64 @@ class MeshDrawer {
 
 
 var meshVS = `
+// uniform varibles
 uniform bool swap;
 uniform mat4 mvp;
 uniform mat4 mv;
 
+// attribute varibles
 attribute vec3 pos; 
 attribute vec3 normal;
-attribute vec2 tPos;
+attribute vec2 texturePos;
 
-varying vec2 vtPos;
+// varying varibles
+varying vec2 vtexturePos;
 varying vec3 vnormal;
-varying vec3 v; // View Direction
+varying vec3 viewDirection; 
 
 vec4 vdir;
 void main()
 {
+	vec4 vdir = mv * vec4(pos, 1);
+	viewDirection = normalize(-1.0*vdir.xyz);
+
 	if ( swap )
 	{
 		gl_Position = mvp * vec4(pos.xzy, 1);
-		vnormal = normal;
-		vtPos = tPos;
-
-		vdir = mv * vec4(pos.xzy, 1);
-		v = normalize(-1.0*vdir.xzy);
+		vnormal = normal.xzy;
+		vtexturePos = texturePos;
 	}
 	else
 	{
 		gl_Position = mvp * vec4(pos, 1);
 		vnormal = normal;
-		vtPos = tPos;
-
-		vdir = mv * vec4(pos, 1);
-		v = normalize(-1.0*vdir.xyz);
+		vtexturePos = texturePos;
 	}
 }
 `
 var meshFS = `
 precision mediump float;
 
+// uniform varibles
 uniform bool show;
 uniform float shininess;
 uniform sampler2D texture;
 uniform vec3 lightDir;
 uniform mat3 mvn;
 
-varying vec2 vtPos;
+// varying varibles
+varying vec2 vtexturePos;
 varying vec3 vnormal;
-varying vec3 v;
+varying vec3 viewDirection;
 
+// function declaration
 vec3 blinn(vec3 Kd);
 
 void main()
 {
 	if ( show )
 	{
-		vec4 tc = texture2D(texture, vtPos);
+		vec4 tc = texture2D(texture, vtexturePos);
 		gl_FragColor = vec4(blinn(tc.xyz), tc.w);
 	}
 	else
@@ -256,14 +259,13 @@ void main()
 
 vec3 blinn(vec3 Kd)
 {
-	vec3 n = mvn * vnormal;
-	vec3 I = vec3(1, 1, 1);
+	vec3 Ks = vec3(1, 1, 1); // specular
+	vec3 I = vec3(1, 1, 1); // intensity
+
+	vec3 n = mvn * vnormal; // normal in camera space
+	vec3 h = normalize(lightDir + viewDirection);
 
 	float cosTheta = dot(n, lightDir);
-
-	vec3 Ks = vec3(1, 1, 1);
-
-	vec3 h = normalize(lightDir + v);
 	float cosPhi = dot(n, h);
 
 	return I * ((cosTheta * Kd) + (Ks * pow(cosPhi, shininess)));
