@@ -173,6 +173,7 @@ void main()
 {
 	if (swap)
 	{
+		gl_Position = mvp * vec4(pos.xzy, 1);
 		gl_Position = mvp * vec4(pos.xzy, 1); // Use swizzle to swap y & z
 		texCoord = texPos;
 	}
@@ -190,10 +191,10 @@ uniform sampler2D texture;
 varying vec2 texCoord;
 void main()
 {
+	gl_FragColor = vec4(1,gl_FragCoord.z*gl_FragCoord.z,0,1);
 	if (show)
 	{
-		Kd = texture2D(texture, texCoord);
-		
+		gl_FragColor = texture2D(texture, texCoord);
 	}
 	else
 	{
