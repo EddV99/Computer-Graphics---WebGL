@@ -34,7 +34,18 @@ uniform samplerCube envMap;
 uniform int bounceLimit;
 
 bool IntersectRay( inout HitInfo hit, Ray ray );
-vec3 Blinn();
+vec3 Blinn(Material mtl, vec3 normal, vec3 view, vec3 light, vec3 I);
+
+// Does Blinn Material Model shading. Returns color as vec3.
+vec3 Blinn(Material mtl, vec3 normal, vec3 view, vec3 light, vec3 I)
+{
+	vec3 h = normalize(light + view);
+
+	float cosTheta = dot(normal, light);
+	float cosPhi = dot(normal, h);
+
+	return I * ((cosTheta * mtl.k_d) + (mtl.k_s * pow(cosPhi, mtl.n)));
+}
 
 // Shades the given point and returns the computed color.
 vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
@@ -42,8 +53,17 @@ vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
 	vec3 color = vec3(0,0,0);
 	for ( int i=0; i<NUM_LIGHTS; ++i ) {
 		// TO-DO: Check for shadows
-		// TO-DO: If not shadowed, perform shading using the Blinn model
-		color += mtl.k_d * lights[i].intensity;	// change this line
+		Ray shadowRay;
+		shadowRay.pos = position;
+		shadowRay.dir = normalize(lights[i].position - position);
+		HitInfo h; // shadow hit info
+		if ( IntersectRay( h, shadowRay )){
+			
+		}
+		else{
+			color += Blinn(mtl, normal, view, normalize(position - lights[i].position), lights[i].intensity);
+			//color += mtl.k_d * lights[i].intensity;	// change this line
+		}
 	}
 	return color;
 }
@@ -71,23 +91,22 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 
 		float delta = pow(b, 2.0) - (4.0 * a * c);
 
-		if (delta >= 0.0){
+		if (delta >= 0.0){ // change 0.0 comparison for bias 
 			// If delta is positive or zero then we found a hit.
 			foundHit = true;
 
 			float t = (-b - sqrt(delta)) / (2.0*a); // use negative for first hit
 			vec3 x = ray.pos + (t * ray.dir); // position is x = p + td
-			vec3 xn = normalize(x); // find normal of x
-
 
 			if (x.z > closest && closest <= 0.0)
 			{
+				// update closest sphere
 				closest = x.z;
 
 				// If intersection is found, update the given HitInfo
 				hit.t = t;
 				hit.position = x;
-				hit.normal = xn;
+				hit.normal = normalize(x);
 				hit.mtl = sphere.mtl;
 			}
 		}
