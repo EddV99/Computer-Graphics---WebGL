@@ -55,9 +55,31 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 {
 	hit.t = 1e30;
 	bool foundHit = false;
+	float closestSoFar = hit.t;
+
 	for ( int i=0; i<NUM_SPHERES; ++i ) {
 		// TO-DO: Test for ray-sphere intersection
 		// TO-DO: If intersection is found, update the given HitInfo
+		Sphere sphere = spheres[i];
+		vec3 d = normalize(ray.dir);
+		float a = dot(d, d);
+		float b = dot(2.0 * d, ray.pos - sphere.center);
+		float c = dot(ray.pos - sphere.center, ray.pos - sphere.center) - (sphere.radius * sphere.radius);
+
+		float delta = (b * b) - (4.0 * a * c);
+
+		if(delta >= 0.0){ // found hit if greater than zero
+			foundHit = true;
+			float t = (-b - sqrt(delta)) / (2.0 * a); // minus one is closest
+			if(t < closestSoFar){
+				closestSoFar = t;
+
+				hit.t = t;
+				hit.position = ray.pos + (t * ray.dir);//x = p + (t*d)
+				hit.normal = normalize(hit.position - sphere.center);
+				hit.mtl = sphere.mtl;
+			}
+		}
 	}
 	return foundHit;
 }
