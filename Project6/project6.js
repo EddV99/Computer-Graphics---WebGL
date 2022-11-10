@@ -33,8 +33,11 @@ uniform Light  lights [ NUM_LIGHTS  ];
 uniform samplerCube envMap;
 uniform int bounceLimit;
 
+bool IntersectShadowRay(Ray ray);
 bool IntersectRay( inout HitInfo hit, Ray ray );
 vec3 Blinn(Material mtl, vec3 normal, vec3 view, vec3 light, vec3 I);
+
+float bias = 0.3;
 
 // Does Blinn Material Model shading. Returns color as vec3.
 vec3 Blinn(Material mtl, vec3 normal, vec3 view, vec3 light, vec3 I)
@@ -44,28 +47,50 @@ vec3 Blinn(Material mtl, vec3 normal, vec3 view, vec3 light, vec3 I)
 	float cosTheta = dot(normal, light);
 	float cosPhi = dot(normal, h);
 
-	return I * ((cosTheta * mtl.k_d) + (mtl.k_s * pow(cosPhi, mtl.n)));
+	return I * ((max(0.0, cosTheta) * mtl.k_d) + (mtl.k_s * pow(max(0.0, cosPhi), mtl.n)));
 }
 
 // Shades the given point and returns the computed color.
 vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
 {
 	vec3 color = vec3(0,0,0);
+	Ray shadowRay;
 	for ( int i=0; i<NUM_LIGHTS; ++i ) {
-		// TO-DO: Check for shadows
-		Ray shadowRay;
+
 		shadowRay.pos = position;
 		shadowRay.dir = normalize(lights[i].position - position);
-		HitInfo h; // shadow hit info
-		if ( IntersectRay( h, shadowRay )){
-			
+
+		// Check for shadows
+		if ( !IntersectShadowRay( shadowRay )){
+			color += Blinn(mtl, normal, view, normalize(lights[i].position - position), lights[i].intensity);
 		}
 		else{
-			color += Blinn(mtl, normal, view, normalize(position - lights[i].position), lights[i].intensity);
-			//color += mtl.k_d * lights[i].intensity;	// change this line
+			//color += mtl.k_d * lights[i].intensity;
+			color += Blinn(mtl, normal, view, normalize(lights[i].position - position), lights[i].intensity * .5);
 		}
 	}
 	return color;
+}
+bool IntersectShadowRay(Ray ray){
+	Sphere sphere;
+	for ( int i=0; i<NUM_SPHERES; ++i ) {
+	
+		// grab sphere to test
+		sphere = spheres[i];
+
+		// This implementation assumes we wont be in sphere!!!! [FIX FOR FINAL TURN IN]
+		float a = dot(ray.dir, ray.dir);
+		float b = dot(2.0 * ray.dir, ray.pos - sphere.center);
+		float c = dot(ray.pos - sphere.center, ray.pos - sphere.center) - pow(sphere.radius, 2.0);
+
+		float delta = pow(b, 2.0) - (4.0 * a * c);
+		
+		// Test for ray-sphere intersection
+		if (delta >= bias){ // change 0.0 comparison for bias 
+			return true;
+		}
+	}
+	return false;
 }
 
 // Intersects the given ray with all spheres in the scene
@@ -98,7 +123,17 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 			float t = (-b - sqrt(delta)) / (2.0*a); // use negative for first hit
 			vec3 x = ray.pos + (t * ray.dir); // position is x = p + td
 
-			if (x.z > closest && closest <= 0.0)
+			if( closest > 0.0){
+				// update closest sphere
+				closest = x.z;
+
+				// If intersection is found, update the given HitInfo
+				hit.t = t;
+				hit.position = x;
+				hit.normal = normalize(2.0 * (x - sphere.center));
+				hit.mtl = sphere.mtl;
+			}
+			else if (x.z > closest)
 			{
 				// update closest sphere
 				closest = x.z;
@@ -106,7 +141,7 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 				// If intersection is found, update the given HitInfo
 				hit.t = t;
 				hit.position = x;
-				hit.normal = normalize(x);
+				hit.normal = normalize(2.0 * (x - sphere.center));
 				hit.mtl = sphere.mtl;
 			}
 		}
@@ -132,11 +167,16 @@ vec4 RayTracer( Ray ray )
 			Ray r;	// this is the reflection ray
 			HitInfo h;	// reflection hit info
 			
-			// TO-DO: Initialize the reflection ray
-			
+			// Initialize the reflection ray
+			r.pos = hit.position;
+			r.dir = reflect(view, hit.normal);
+
 			if ( IntersectRay( h, r ) ) {
-				// TO-DO: Hit found, so shade the hit point
-				// TO-DO: Update the loop variables for tracing the next reflection ray
+				// Hit found, so shade the hit point
+				view = normalize( -r.dir );
+				Shade(h.mtl, h.position, h.normal, view);
+				// Update the loop variables for tracing the next reflection ray
+				hit = h;
 			} else {
 				// The refleciton ray did not intersect with anything,
 				// so we are using the environment color
