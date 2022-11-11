@@ -33,20 +33,22 @@ uniform Light  lights [ NUM_LIGHTS  ];
 uniform samplerCube envMap;
 uniform int bounceLimit;
 
-float bias = 0.01;
-vec3 I_a = vec3(.5, .5, .5);
+float bias = 0.0001;
+vec3 I_a = vec3(.1, .1 ,.1);
 
 bool IntersectRay( inout HitInfo hit, Ray ray );
 vec3 Blinn(Material mtl, vec3 viewDir, vec3 lightDir, vec3 normal, vec3 I);
 bool IntersectShadowRay(Ray ray);
 
 vec3 Blinn(Material mtl, vec3 viewDir, vec3 lightDir, vec3 normal, vec3 I){
-	vec3 h = normalize(normalize(viewDir) + normalize(lightDir));
+	normal = (normal);
+	//lightDir = normalize(lightDir);
+	vec3 h = normalize(viewDir + lightDir);
 
-	float cosTheta = dot(normalize(normal), normalize(lightDir));
-	float cosPhi = dot(normalize(normal), h);
+	float cosTheta = dot(normal, lightDir);
+	float cosPhi = dot(normal, h);
 
-	return mtl.k_d * I * cosTheta + mtl.k_s * I * pow(cosPhi, mtl.n);
+	return I * ((mtl.k_d * max(0.0, cosTheta)) + (mtl.k_s * pow(max(0.0, cosPhi), mtl.n)));
 }
 // Shades the given point and returns the computed color.
 vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
@@ -59,13 +61,12 @@ vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
 		// TO-DO: Check for shadows
 		// TO-DO: If not shadowed, perform shading using the Blinn model
 		Light light = lights[i];
-		shadowRay.dir = ((light.position - shadowRay.pos));
+		shadowRay.dir = (light.position - shadowRay.pos);
 		//shadowRay.dir = normalize((shadowRay.pos - light.position));
 
 		if( IntersectShadowRay(shadowRay) ){ // is in shadow
-			color += mtl.k_d * I_a;
 		} else{ // not in shadow
-			color += Blinn(mtl, view, shadowRay.dir, normal, light.intensity);
+			color += Blinn(mtl, view, normalize(shadowRay.dir), normal, light.intensity);
 		}
 
 		//color += mtl.k_d * lights[i].intensity;	// change this line
@@ -86,7 +87,11 @@ bool IntersectShadowRay(Ray ray){
 		float delta = (b * b) - (4.0 * a * c);
 
 		if(delta >= bias){ // found hit if greater than zero
-			return true;
+			float t = (-b - sqrt(delta)) / (2.0 * a);
+			if(t >= 0.0){
+				return true;
+			}
+			
 		}
 	}
 	return false;
@@ -113,7 +118,7 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
 
 		float delta = (b * b) - (4.0 * a * c);
 
-		if(delta >= 0.0){ // found hit if greater than zero
+		if(delta >= bias){ // found hit if greater than zero
 			float t = (-b - sqrt(delta)) / (2.0 * a); // minus one is closest
 			vec3 x = ray.pos + (t * d);
 			if(t < closestSoFar && t >= 0.0){
@@ -149,12 +154,25 @@ vec4 RayTracer( Ray ray )
 			HitInfo h;	// reflection hit info
 			
 			// TO-DO: Initialize the reflection ray
-			r.dir = 2.0 * dot(view, hit.normal) * hit.normal - view;
+			r.dir = (2.0 * dot(view, hit.normal) * hit.normal - view);
+			//r.dir = -reflect(view, hit.normal);
 			r.pos = hit.position;
 			if ( IntersectRay( h, r ) ) {
 				// TO-DO: Hit found, so shade the hit point
-				clr += k_s * Shade(h.mtl, h.position, h.normal, normalize(-r.dir));
+				
+				//k_s = h.mtl.k_s;
+
+				clr += k_s * Shade(h.mtl, h.position, h.normal, normalize( -r.dir ));
+				
 				// TO-DO: Update the loop variables for tracing the next reflection ray
+				
+				view = normalize(-r.dir);
+
+				hit.t = h.t;
+				hit.position = h.position;
+				hit.normal = h.normal;
+				hit.mtl = h.mtl;
+				//k_s = h.mtl.k_s;
 
 			} else {
 				// The refleciton ray did not intersect with anything,
