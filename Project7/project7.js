@@ -282,100 +282,49 @@ vec3 blinn(vec3 Kd)
 function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, particleMass, gravity, restitution )
 {
 	var forces = Array( positions.length ); // The total for per particle
-
-
-
-
 	// Compute the total force of each particle
-	// For each particle we have gravity force
-    mg = gravity.mul(particleMass);
-    for (var i = 0 ; i < positions.length ; ++i)
+
+    //Gravity Force
+    var mg = gravity.mul(particleMass);
+    //forces.fill(mg);
+
+    for( var i = 0; i < springs.length; ++i )
     {
-        forces[i] = mg;
+        // Grab current mass-spring-system to work with 
+        var mss = springs[i];
+
+        // positions of points
+        var x0 = positions[mss.p0];
+        var x1 = positions[mss.p1];
+        // velocities of points
+        var v0 = velocitites[mss.p0];
+        var v1 = velocitites[mss.p1];
+
+        // calculate spring force
+        var l = x1.sub(x0).len();
+        var d = x1.sub(x0).div(l);
+        
+        var fs_0 = d.mul(stiffness * (l - mss.rest));
+        var fs_1 = fs_0.mul(-1);
+
+        // calculate damping force
+        var dl = v1.sub(v0).dot(d);
+        var fd_0 = d.mul(dl * damping);
+        var fd_1 = fd_0.mul(-1);
+        
+        // add and update forces
+        forces[mss.p0] = mg.add(fs_0).add(fd_0);
+        forces[mss.p1] = mg.add(fs_1).add(fd_1);
     }
-    // Now compute spring and dampening force
-    for(var i = 0 ; i < springs.length ; ++i )
-    {
-        mss = springs[0]; // Current mass-spring system
 
-        x_0 = positions[mss.p0];
-        x_1 = positions[mss.p1];
-        v_0 = velocities[mss.p0];
-        v_1 = velocities[mss.p1];
-
-        l = x_1.sub(x_0).len();
-        d = x_1.sub(x_0).div(l);
-
-        FS_0 = stiffness * (l - mss.rest) * d;
-        FS_1 = -FS_0;
-
-        dl = v_1.sub(v_0).dot(d);
-        FD_0 = stiffness * dl * d;
-        FD_1 = -FD_0;
-
-        forces[mss.p0] += FS_0 + FD_0;
-        forces[mss.p1] += FS_1 + FD_1;
-    }
 
 	// Update positions and velocities
-    for(var i = 0; i < positions.length; ++i)
+    for (var i = 0; i < positions.length; ++i)
     {
-        a = forces[i] / particleMass;
-
-        positions[i] = positions[i] + dt * velocities[i];
-        velocities[i] = velocities[i] + dt * a;
+        var a = forces[i].div(particleMass);
+        positions[i] = positions[i].add(velocities[i].mul(dt));
+        velocities[i] = velocities[i].add(a.mul(dt));
     }
 	// Handle collisions
-	for(var i = 0; i < positions.length; ++i)
-    {
-        var p = positions[i];
-        if(p.x < -1 || p.x > 1)
-        {
-            if(p.x < -1)
-            {
-                h = p.x - (-1);
-                positions[i].x = abs(restitution * h) + -1;
-                velocities[i].x = -restitution * velocities[i].x;
-
-            }
-            else
-            {
-                h = p.x - 1;
-                positions[i].x = abs(restitution * h) + 1;
-                velocities[i].x = -restitution * velocities[i].x;
-            }
-        }
-        else if(p.y < -1 || p.y > 1)
-        {
-            if(p.y < -1)
-            {
-                h = p.y - (-1);
-                positions[i].y = abs(restitution * h) + -1;
-                velocities[i].y = -restitution * velocities[i].y;
-
-            }
-            else
-            {
-                h = p.y - 1;
-                positions[i].y = abs(restitution * h) + 1;
-                velocities[i].y = -restitution * velocities[i].y;
-            }
-        }
-        else if(p.z < -1 || p.z > 1)
-        {
-            if(p.z < -1)
-            {
-                h = p.z - (-1);
-                positions[i].z = abs(restitution * h) + -1;
-                velocities[i].z = -restitution * velocities[i].z;
-
-            }
-            else
-            {
-                h = p.z - 1;
-                positions[i].z = abs(restitution * h) + 1;
-                velocities[i].z = -restitution * velocities[i].z;
-            }
-        }
-    }
+    
 }
