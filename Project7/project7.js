@@ -282,11 +282,11 @@ vec3 blinn(vec3 Kd)
 function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, particleMass, gravity, restitution )
 {
 	var forces = Array( positions.length ); // The total for per particle
+
 	// Compute the total force of each particle
 
     //Gravity Force
     var mg = gravity.mul(particleMass);
-    //forces.fill(mg);
 
     for( var i = 0; i < springs.length; ++i )
     {
@@ -297,13 +297,12 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
         var x0 = positions[mss.p0];
         var x1 = positions[mss.p1];
         // velocities of points
-        var v0 = velocitites[mss.p0];
-        var v1 = velocitites[mss.p1];
-
+        var v0 = velocities[mss.p0];
+        var v1 = velocities[mss.p1];
         // calculate spring force
         var l = x1.sub(x0).len();
         var d = x1.sub(x0).div(l);
-        
+
         var fs_0 = d.mul(stiffness * (l - mss.rest));
         var fs_1 = fs_0.mul(-1);
 
@@ -325,6 +324,60 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
         positions[i] = positions[i].add(velocities[i].mul(dt));
         velocities[i] = velocities[i].add(a.mul(dt));
     }
-	// Handle collisions
-    
+
+    // Handle collisions
+    for (var i = 0 ; i < positions.length; ++i)
+    {
+        var pt = positions[i];
+        var v = velocities[i];
+        var h = 0;
+
+        // check x-plane
+        if(pt.x < -1)
+        {
+            h = Math.abs(pt.x - (-1)) * restitution;
+            pt.x = -1 + h;
+            v.x = -1 * v.x * restitution;
+        }
+        else if (pt.x > 1)
+        {
+            h = Math.abs(pt.x - 1) * restitution;
+            pt.x = 1 - h;
+            v.x = -1 * v.x * restitution;
+        }
+        // check y-plane
+        else if(pt.y < -1)
+        {
+
+            console.log(positions[i]);
+            console.log(velocities[i]);
+
+            h = Math.abs(pt.y - (-1)) * restitution;
+            pt.y = -1 + h;
+            v.y = -1 * v.y * restitution;
+
+            console.log(positions[i]);
+            console.log(velocities[i]);
+
+        }
+        else if (pt.y > 1)
+        {
+            h = Math.abs(pt.y - 1) * restitution;
+            pt.y = 1 - h;
+            v.y = -1 * v.y * restitution;
+        }
+        // check z-plane
+		else if(pt.z < -1)
+        {
+            h = Math.abs(pt.z - (-1)) * restitution;
+            pt.z = -1 + h;
+            v.z = -1 * v.z * restitution;
+        }
+        else if (pt.z > 1)
+        {
+            h = Math.abs(pt.z - 1) * restitution;
+            pt.z = 1 - h;
+            v.z = -1 * v.z * restitution;
+        }
+    }
 }
