@@ -287,7 +287,7 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
 
     //Gravity Force
     var mg = gravity.mul(particleMass);
-
+    forces.fill(mg);
     for( var i = 0; i < springs.length; ++i )
     {
         // Grab current mass-spring-system to work with 
@@ -312,10 +312,9 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
         var fd_1 = fd_0.mul(-1);
         
         // add and update forces
-        forces[mss.p0] = mg.add(fs_0).add(fd_0);
-        forces[mss.p1] = mg.add(fs_1).add(fd_1);
+        forces[mss.p0] = forces[mss.p0].add(fs_0).add(fd_0);
+        forces[mss.p1] = forces[mss.p1].add(fs_1).add(fd_1);
     }
-
 
 	// Update positions and velocities
     for (var i = 0; i < positions.length; ++i)
@@ -346,25 +345,18 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
             v.x = -1 * v.x * restitution;
         }
         // check y-plane
-        else if(pt.y < -1)
+        else if(pt.y < -1.0)
         {
 
-            console.log(positions[i]);
-            console.log(velocities[i]);
-
-            h = Math.abs(pt.y - (-1)) * restitution;
-            pt.y = -1 + h;
-            v.y = -1 * v.y * restitution;
-
-            console.log(positions[i]);
-            console.log(velocities[i]);
-
+            h = Math.abs(pt.y - (-1.0)) * restitution;
+            pt.y = -1.0 + h;
+            v.y = -1.0 * v.y * restitution;
         }
-        else if (pt.y > 1)
+        else if (pt.y > 1.0)
         {
-            h = Math.abs(pt.y - 1) * restitution;
-            pt.y = 1 - h;
-            v.y = -1 * v.y * restitution;
+            h = Math.abs(pt.y - 1.0) * restitution;
+            pt.y = 1.0 - h;
+            v.y = -1.0 * v.y * restitution;
         }
         // check z-plane
 		else if(pt.z < -1)
