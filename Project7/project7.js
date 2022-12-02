@@ -2,8 +2,7 @@
 // The two rotations are applied around x and y axes.
 // It returns the combined 4x4 transformation matrix as an array in column-major order.
 // You can use the MatrixMult function defined in project5.html to multiply two 4x4 matrices in the same format.
-function GetModelViewMatrix( translationX, translationY, translationZ, rotationX, rotationY )
-{
+function GetModelViewMatrix(translationX, translationY, translationZ, rotationX, rotationY) {
 	// Modify the code below to form the transformation matrix.
 	var trans = [
 		1, 0, 0, 0,
@@ -39,28 +38,26 @@ function GetModelViewMatrix( translationX, translationY, translationZ, rotationX
 
 // Complete the implementation of the following class.
 
-class MeshDrawer
-{
+class MeshDrawer {
 	// The constructor is a good place for taking care of the necessary initializations.
-	constructor()
-	{
-     	// Program
-		this.prog = InitShaderProgram( meshVS, meshFS );
+	constructor() {
+		// Program
+		this.prog = InitShaderProgram(meshVS, meshFS);
 
 		// Uniform Locations
-		this.show = gl.getUniformLocation( this.prog, 'show' );
-		this.swap = gl.getUniformLocation( this.prog, 'swap' );
-		this.shininess = gl.getUniformLocation( this.prog, 'shininess' );
-		this.sampler = gl.getUniformLocation( this.prog, 'texture' );
-		this.mvp = gl.getUniformLocation( this.prog, 'mvp' );
-		this.mv = gl.getUniformLocation( this.prog, 'mv' );
-		this.mvn = gl.getUniformLocation( this.prog, 'mvn' );
-		this.lightDir = gl.getUniformLocation( this.prog, 'lightDir' );
+		this.show = gl.getUniformLocation(this.prog, 'show');
+		this.swap = gl.getUniformLocation(this.prog, 'swap');
+		this.shininess = gl.getUniformLocation(this.prog, 'shininess');
+		this.sampler = gl.getUniformLocation(this.prog, 'texture');
+		this.mvp = gl.getUniformLocation(this.prog, 'mvp');
+		this.mv = gl.getUniformLocation(this.prog, 'mv');
+		this.mvn = gl.getUniformLocation(this.prog, 'mvn');
+		this.lightDir = gl.getUniformLocation(this.prog, 'lightDir');
 
 		// Attribute Locations
-		this.pos = gl.getAttribLocation( this.prog, 'pos' );
-		this.texturePos = gl.getAttribLocation( this.prog, 'texturePos' );
-		this.normal = gl.getAttribLocation( this.prog, 'normal' );
+		this.pos = gl.getAttribLocation(this.prog, 'pos');
+		this.texturePos = gl.getAttribLocation(this.prog, 'texturePos');
+		this.normal = gl.getAttribLocation(this.prog, 'normal');
 
 		// Buffers
 		this.posBuffer = gl.createBuffer();
@@ -74,7 +71,7 @@ class MeshDrawer
 		this.swapYZ(0);
 		this.showTexture(0);
 	}
-	
+
 	// This method is called every time the user opens an OBJ file.
 	// The arguments of this function is an array of 3D vertex positions,
 	// an array of 2D texture coordinates, and an array of vertex normals.
@@ -86,22 +83,21 @@ class MeshDrawer
 	// form the texture coordinate of a vertex and every three consecutive 
 	// elements in the normals array form a vertex normal.
 	// Note that this method can be called multiple times.
-	setMesh( vertPos, texCoords, normals )
-	{
+	setMesh(vertPos, texCoords, normals) {
 		// Update the contents of the vertex buffer objects.
 		gl.useProgram(this.prog);
 		this.numTriangles = vertPos.length / 3;
 
-		gl.bindBuffer( gl.ARRAY_BUFFER, this.posBuffer );
-		gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW );
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW);
 
-		gl.bindBuffer( gl.ARRAY_BUFFER, this.tPosBuffer );
-		gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW );
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.tPosBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
-		gl.bindBuffer( gl.ARRAY_BUFFER, this.normalsBuffer );
-		gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW );
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalsBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
 	}
-		// This method is called when the user changes the state of the
+	// This method is called when the user changes the state of the
 	// "Swap Y-Z Axes" checkbox.
 	// The argument is a boolean that indicates if the checkbox is checked.
 	swapYZ(swap) {
@@ -123,21 +119,21 @@ class MeshDrawer
 		// Complete the WebGL initializations before drawing
 		gl.useProgram(this.prog);
 		// Set uniform variables
-		gl.uniformMatrix4fv( this.mvp, false, matrixMVP );
-		gl.uniformMatrix4fv( this.mv, false, matrixMV );
-		gl.uniformMatrix3fv( this.mvn, false, matrixNormal );
+		gl.uniformMatrix4fv(this.mvp, false, matrixMVP);
+		gl.uniformMatrix4fv(this.mv, false, matrixMV);
+		gl.uniformMatrix3fv(this.mvn, false, matrixNormal);
 
-		gl.bindBuffer( gl.ARRAY_BUFFER, this.posBuffer );
-		gl.vertexAttribPointer( this.pos, 3, gl.FLOAT, false, 0, 0 );
-		gl.enableVertexAttribArray( this.pos );
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
+		gl.vertexAttribPointer(this.pos, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.pos);
 
-		gl.bindBuffer( gl.ARRAY_BUFFER, this.tPosBuffer );
-		gl.vertexAttribPointer( this.texturePos, 2, gl.FLOAT, false, 0, 0 );
-		gl.enableVertexAttribArray( this.texturePos );
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.tPosBuffer);
+		gl.vertexAttribPointer(this.texturePos, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.texturePos);
 
-		gl.bindBuffer( gl.ARRAY_BUFFER, this.normalsBuffer );
-		gl.vertexAttribPointer( this.normal, 3, gl.FLOAT, false, 0, 0 );
-		gl.enableVertexAttribArray( this.normal );
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalsBuffer);
+		gl.vertexAttribPointer(this.normal, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(this.normal);
 
 		gl.drawArrays(gl.TRIANGLES, 0, this.numTriangles);
 	}
@@ -279,91 +275,76 @@ vec3 blinn(vec3 Kd)
 // This function is called for every step of the simulation.
 // Its job is to advance the simulation for the given time step duration dt.
 // It updates the given positions and velocities.
-function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, particleMass, gravity, restitution )
-{
-	var forces = Array( positions.length ); // The total for per particle
-
+function SimTimeStep(dt, positions, velocities, springs, stiffness, damping, particleMass, gravity, restitution) {
+	var forces = Array(positions.length); // The total for per particle
 
 	// Compute the total force of each particle
-    //Gravity Force
+	//	First add gravity force to each particle
+	let mg = gravity.mul(particleMass);
+	for (let i = 0; i < forces.length; ++i) {
+		forces[i] = mg.copy();
+	}
 
-    let mgg = gravity.mul(particleMass);
-    for(let i = 0; i < forces.length; i++)
-    {
-        forces[i] = mgg.copy();
-    }
+	// For each mass-spring system find spring and damping forces
+	for (let i = 0; i < springs.length; ++i) {
+		// mass-spring system
+		let mss = springs[i];
 
-    for( let i = 0; i < springs.length; ++i )
-    {
-        // mass-spring system
-        let mss = springs[i];
+		// spring force
+		let length = (positions[mss.p1].sub(positions[mss.p0])).len();
+		let direction = (positions[mss.p1].sub(positions[mss.p0])).div(length);
+		let springForce0 = direction.mul(length - mss.rest).mul(stiffness);
 
-        let length = (positions[mss.p1].sub(positions[mss.p0])).len();
-        let direction = (positions[mss.p1].sub(positions[mss.p0])).div(length);
-        let springForce0 = direction.mul(length - mss.rest).mul(stiffness);
+		// damping force
+		let changeOfLength = (velocities[mss.p1].sub(velocities[mss.p0])).dot(direction);
+		let dampingForce0 = direction.mul(changeOfLength).mul(damping * stiffness);
 
-        let dl = (velocities[mss.p1].sub(velocities[mss.p0])).dot(direction);
-        let dampingForce0 = direction.mul(dl).mul(damping);
+		// update forces
+		forces[mss.p0].inc((springForce0.add(dampingForce0)));
+		forces[mss.p1].dec((springForce0.add(dampingForce0)));
+	}
 
-        forces[mss.p0] = forces[mss.p0].add((springForce0.add(dampingForce0)));
-        forces[mss.p1] = forces[mss.p1].sub((springForce0.add(dampingForce0)));
-    }
+	// Update positions and velocities for each particle
+	for (let i = 0; i < positions.length; ++i) {
+		let acceleration = forces[i].div(particleMass);
 
-	// Update positions and velocities
-    for (let i = 0; i < positions.length; ++i)
-    {
-        let a = forces[i].div(particleMass);
+		// semi-implicit euler
+		velocities[i].inc(acceleration.mul(dt));
+		positions[i].inc(velocities[i].mul(dt));
+	}
 
-        positions[i].inc(velocities[i].mul(dt));
-        velocities[i].inc(a.mul(dt));
-    }
+	// Handle collisions
+	for (let i = 0; i < positions.length; ++i) {
+		if (positions[i].x > 1) {
+			let h = (positions[i].x - 1) * restitution;
+			positions[i].x = 1 - h;
+			velocities[i].x = -restitution * velocities[i].x;
+		}
+		if (positions[i].y > 1) {
+			let h = (positions[i].y - 1) * restitution;
+			positions[i].y = 1 - h;
+			velocities[i].y = -restitution * velocities[i].y;
+		}
+		if (positions[i].z > 1) {
+			let h = (positions[i].z - 1) * restitution;
+			positions[i].z = 1 - h;
+			velocities[i].z = -restitution * velocities[i].z;
+		}
 
-    // Handle collisions
-    for (let i = 0 ; i < positions.length; ++i)
-    {
-        let pt = positions[i];
-        let v = velocities[i];
-        let h = 0;
-
-        // check x-plane
-        if(pt.x < -1.0)
-        {
-            h = Math.abs(pt.x - (-1.0)) * restitution;
-            pt.x = -1.0 + h;
-            v.x = -1.0 * v.x * restitution;
-        }
-        else if (pt.x > 1.0)
-        {
-            h = Math.abs(pt.x - 1.0) * restitution;
-            pt.x = 1.0 - h;
-            v.x = -1.0 * v.x * restitution;
-        }
-        // check y-plane
-        else if(pt.y < -1.0)
-        {
-
-            h = Math.abs(pt.y - (-1.0)) * restitution;
-            pt.y = -1.0 + h;
-            v.y = -1.0 * v.y * restitution;
-        }
-        else if (pt.y > 1.0)
-        {
-            h = Math.abs(pt.y - 1.0) * restitution;
-            pt.y = 1.0 - h;
-            v.y = -1.0 * v.y * restitution;
-        }
-        // check z-plane
-		else if(pt.z < -1.0)
-        {
-            h = Math.abs(pt.z - (-1.0)) * restitution;
-            pt.z = -1.0 + h;
-            v.z = -1.0 * v.z * restitution;
-        }
-        else if (pt.z > 1.0)
-        {
-            h = Math.abs(pt.z - 1.0) * restitution;
-            pt.z = 1.0 - h;
-            v.z = -1.0 * v.z * restitution;
-        }
-    }
+		if (positions[i].x < -1) {
+			let h = Math.abs(positions[i].x - (-1)) * restitution;
+			positions[i].x = h + -1;
+			velocities[i].x = -restitution * velocities[i].x;
+		}
+		if (positions[i].y < -1) {
+			let h = Math.abs(positions[i].y - (-1)) * restitution;
+			positions[i].y = h + -1;
+			velocities[i].y = -restitution * velocities[i].y;
+		}
+		if (positions[i].z < -1) {
+			let h = Math.abs(positions[i].z - (-1)) * restitution;
+			positions[i].z = h + -1;
+			velocities[i].z = -restitution * velocities[i].z;
+		}
+	}
 }
