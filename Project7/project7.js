@@ -283,66 +283,60 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
 {
 	var forces = Array( positions.length ); // The total for per particle
 
+
 	// Compute the total force of each particle
-
     //Gravity Force
-    var mg = gravity.mul(particleMass);
-    forces.fill(mg);
-    for( var i = 0; i < springs.length; ++i )
+
+    let mgg = gravity.mul(particleMass);
+    for(let i = 0; i < forces.length; i++)
     {
-        // Grab current mass-spring-system to work with 
-        var mss = springs[i];
+        forces[i] = mgg.copy();
+    }
 
-        // positions of points
-        var x0 = positions[mss.p0];
-        var x1 = positions[mss.p1];
-        // velocities of points
-        var v0 = velocities[mss.p0];
-        var v1 = velocities[mss.p1];
-        // calculate spring force
-        var l = x1.sub(x0).len();
-        var d = x1.sub(x0).div(l);
+    for( let i = 0; i < springs.length; ++i )
+    {
+        // mass-spring system
+        let mss = springs[i];
 
-        var fs_0 = d.mul(stiffness * (l - mss.rest));
-        var fs_1 = fs_0.mul(-1);
+        let length = (positions[mss.p1].sub(positions[mss.p0])).len();
+        let direction = (positions[mss.p1].sub(positions[mss.p0])).div(length);
+        let springForce0 = direction.mul(length - mss.rest).mul(stiffness);
 
-        // calculate damping force
-        var dl = v1.sub(v0).dot(d);
-        var fd_0 = d.mul(dl * damping);
-        var fd_1 = fd_0.mul(-1);
-        
-        // add and update forces
-        forces[mss.p0] = forces[mss.p0].add(fs_0).add(fd_0);
-        forces[mss.p1] = forces[mss.p1].add(fs_1).add(fd_1);
+        let dl = (velocities[mss.p1].sub(velocities[mss.p0])).dot(direction);
+        let dampingForce0 = direction.mul(dl).mul(damping);
+
+        forces[mss.p0] = forces[mss.p0].add((springForce0.add(dampingForce0)));
+        forces[mss.p1] = forces[mss.p1].sub((springForce0.add(dampingForce0)));
     }
 
 	// Update positions and velocities
-    for (var i = 0; i < positions.length; ++i)
+    for (let i = 0; i < positions.length; ++i)
     {
-        var a = forces[i].div(particleMass);
-        positions[i] = positions[i].add(velocities[i].mul(dt));
-        velocities[i] = velocities[i].add(a.mul(dt));
+        let a = forces[i].div(particleMass);
+
+        positions[i].inc(velocities[i].mul(dt));
+        velocities[i].inc(a.mul(dt));
     }
 
     // Handle collisions
-    for (var i = 0 ; i < positions.length; ++i)
+    for (let i = 0 ; i < positions.length; ++i)
     {
-        var pt = positions[i];
-        var v = velocities[i];
-        var h = 0;
+        let pt = positions[i];
+        let v = velocities[i];
+        let h = 0;
 
         // check x-plane
-        if(pt.x < -1)
+        if(pt.x < -1.0)
         {
-            h = Math.abs(pt.x - (-1)) * restitution;
-            pt.x = -1 + h;
-            v.x = -1 * v.x * restitution;
+            h = Math.abs(pt.x - (-1.0)) * restitution;
+            pt.x = -1.0 + h;
+            v.x = -1.0 * v.x * restitution;
         }
-        else if (pt.x > 1)
+        else if (pt.x > 1.0)
         {
-            h = Math.abs(pt.x - 1) * restitution;
-            pt.x = 1 - h;
-            v.x = -1 * v.x * restitution;
+            h = Math.abs(pt.x - 1.0) * restitution;
+            pt.x = 1.0 - h;
+            v.x = -1.0 * v.x * restitution;
         }
         // check y-plane
         else if(pt.y < -1.0)
@@ -359,17 +353,17 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
             v.y = -1.0 * v.y * restitution;
         }
         // check z-plane
-		else if(pt.z < -1)
+		else if(pt.z < -1.0)
         {
-            h = Math.abs(pt.z - (-1)) * restitution;
-            pt.z = -1 + h;
-            v.z = -1 * v.z * restitution;
+            h = Math.abs(pt.z - (-1.0)) * restitution;
+            pt.z = -1.0 + h;
+            v.z = -1.0 * v.z * restitution;
         }
-        else if (pt.z > 1)
+        else if (pt.z > 1.0)
         {
-            h = Math.abs(pt.z - 1) * restitution;
-            pt.z = 1 - h;
-            v.z = -1 * v.z * restitution;
+            h = Math.abs(pt.z - 1.0) * restitution;
+            pt.z = 1.0 - h;
+            v.z = -1.0 * v.z * restitution;
         }
     }
 }
